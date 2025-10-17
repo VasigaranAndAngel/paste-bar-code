@@ -54,8 +54,8 @@ def read_code(frame):
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(frame, code, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
 
-        with open("barcode_results.txt", mode="2") as f:
-            f.write("Barcodes: " + code)
+        with open("barcode_results.txt", mode="a") as f:
+            f.write(code)
 
     return frame
 
