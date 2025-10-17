@@ -1,87 +1,77 @@
 from time import perf_counter
-from pathlib import Path
+
 import cv2
-from pyzbar.pyzbar import decode
-import matplotlib.pyplot as plt
 import pyautogui
+from cv2.typing import MatLike
+from cv2_enumerate_cameras import enumerate_cameras
+from PIL import Image, ImageTk
+from pyzbar.pyzbar import Decoded, decode
+
+from main_window import MainWindow
 
 
-def detect_and_decode_barcode(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Detect barcodes in the grayscale image
-    barcodes = decode(gray)
-
-    # Loop over detected barcodes
-    for barcode in barcodes:
-        # Extract barcode data and type
-        barcode_data = barcode.data.decode("utf-8")
-        barcode_type = barcode.type
-
-        # Print barcode data and type
-        print("Barcode Data:", barcode_data)
-        print("Barcode Type:", barcode_type)
-
-        # Draw a rectangle around the barcode
-        (x, y, w, h) = barcode.rect
-        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-        # Put barcode data and type on the image
-        cv2.putText(
-            image,
-            f"{barcode_data} ({barcode_type})",
-            (x, y - 10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (255, 0, 0),
-            2,
-        )
-
-    # Convert image from BGR to RGB (Matplotlib uses RGB)
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    # plt.imshow(image_rgb)
-    # plt.axis("off")
-    # plt.show()
-
-
-def read_code(frame):
-    barcodes = decode(frame)
+def read_code(frame: MatLike) -> tuple[str, MatLike]:
+    barcodes: list[Decoded] = decode(frame)
     code = ""
     for barcode in barcodes:
         x, y, w, h = barcode.rect
-        code = barcode.data.decode("utf-8")
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        code: str = barcode.data.decode("utf-8")
+        _ = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(frame, code, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
-
-        with open("barcode_results.txt", mode="a") as f:
-            f.write(code)
+        _ = cv2.putText(frame, code, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
 
     return code, frame
 
 
-def main() -> None:
-    # test_image_path2 = Path("./barcode-scanner-756x557.webp").resolve()
-    # test_image_path = Path("./ezgifcom-crop.png").resolve()
-    # image = cv2.imread(test_image_path.as_posix())
-    # detect_and_decode_barcode(image)
-    camera = cv2.VideoCapture(0)
-    ret, frame = camera.read()
-    current_code = ""
-    while ret:
-        ret, frame = camera.read()
-        code, frame = read_code(frame)
-        cv2.imshow("code", frame)
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-        if code and code != current_code:
-            current_code = code
-            pyautogui.typewrite(code)
+current_code: str = ""
+interval = 100
 
-    camera.release()
-    cv2.destroyAllWindows()
+
+def update_next_frame(camera: cv2.VideoCapture, window: MainWindow) -> None:
+    global current_code
+    ret, frame = camera.read()
+    if not ret:
+        window.destroy()
+    else:
+        code, altered_frame = read_code(frame)
+        rgb_image = cv2.cvtColor(altered_frame, cv2.COLOR_BGR2RGB)
+        pil_iamge = Image.fromarray(rgb_image)
+        imagetk = ImageTk.PhotoImage(pil_iamge)
+        window.frame_label["image"] = imagetk
+        window.frame_label.image = imagetk
+        if code and code != current_code:
+            print(f"Captured Code: {code}")
+            current_code = code
+            with open("barcode_results.txt", "a") as f:
+                _ = f.write(code + "\n")
+            pyautogui.typewrite(code)
+        _ = window.after(interval, update_next_frame, camera, window)
+
+
+def change_fps(fps: int) -> None:
+    global interval
+    if fps <= 0:
+        fps = 1
+    interval = int(1000 / fps)
+
+def update_cameras(window: MainWindow) -> None:
+    cameras = enumerate_cameras()
+    for camera in cameras:
+        print(camera.name)
+
+
+def main() -> None:
+    window = MainWindow()
+
+    window.on_fps_change_command = change_fps
+
+    camera = cv2.VideoCapture(1)
+    window.before_quit.append(camera.release)
+
+    _ = window.after(100, update_next_frame, camera, window)
+
+    window.mainloop()
 
 
 if __name__ == "__main__":
