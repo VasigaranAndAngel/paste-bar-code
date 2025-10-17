@@ -77,6 +77,7 @@ def main() -> None:
         if cv2.waitKey(1) & 0xFF == 27:
             break
         if code != current_code:
+            current_code = code
             pyautogui.typewrite(code)
 
     camera.release()
