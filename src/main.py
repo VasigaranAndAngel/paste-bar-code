@@ -3,6 +3,7 @@ from pathlib import Path
 import cv2
 from pyzbar.pyzbar import decode
 import matplotlib.pyplot as plt
+import pyautogui
 
 
 def detect_and_decode_barcode(image):
@@ -46,6 +47,7 @@ def detect_and_decode_barcode(image):
 
 def read_code(frame):
     barcodes = decode(frame)
+    code = ""
     for barcode in barcodes:
         x, y, w, h = barcode.rect
         code = barcode.data.decode("utf-8")
@@ -57,7 +59,7 @@ def read_code(frame):
         with open("barcode_results.txt", mode="a") as f:
             f.write(code)
 
-    return frame
+    return code, frame
 
 
 def main() -> None:
@@ -67,12 +69,15 @@ def main() -> None:
     # detect_and_decode_barcode(image)
     camera = cv2.VideoCapture(0)
     ret, frame = camera.read()
+    current_code = ""
     while ret:
         ret, frame = camera.read()
-        frame = read_code(frame)
+        code, frame = read_code(frame)
         cv2.imshow("code", frame)
         if cv2.waitKey(1) & 0xFF == 27:
             break
+        if code != current_code:
+            pyautogui.typewrite(code)
 
     camera.release()
     cv2.destroyAllWindows()
