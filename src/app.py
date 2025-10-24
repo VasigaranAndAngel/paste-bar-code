@@ -1,11 +1,12 @@
+import base64
+from pathlib import Path
 from typing import Callable
+
+import cv2
+import numpy as np
 from cv2.typing import MatLike
 from flask import Flask, render_template
 from flask_socketio import SocketIO
-import base64
-import cv2
-import numpy as np
-from pathlib import Path
 
 app: Flask = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")

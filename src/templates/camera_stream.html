@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Camera Stream</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Live Camera Stream to Flask</h2>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const socket = io();
+
+        // Ask for camera access
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                sendFrames();
+            })
+            .catch(err => alert('Camera access denied: ' + err));
+
+        // Capture and send frames continuously
+        function sendFrames() {
+            setInterval(() => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.5); // compress for speed
+                socket.emit('frame', dataURL);
+            }, 100); // 10 FPS — adjust for your needs
+        }
+
+        // Optional: receive response from Flask
+        socket.on('server_response', (data) => {
+            console.log(data.msg);
+        });
+    </script>
+</body>
+</html>
