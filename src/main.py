@@ -73,6 +73,21 @@ def change_fps(fps: int) -> None:
     interval = int(1000 / fps)
 
 
+current_code = ""
+
+
+def handle_frame(frame: MatLike) -> None:
+    global current_code
+    code, frame = read_code(frame)
+    cv2.imshow("frames", frame)
+    if cv2.waitKey(1) == ord("q"):
+        cv2.destroyAllWindows()
+        quit()
+    if code and code != current_code:
+        current_code = code
+        print(code)
+
+
 def main() -> None:
     # test_image_path2 = Path("./barcode-scanner-756x557.webp").resolve()
     # test_image_path = Path("./ezgifcom-crop.png").resolve()
@@ -97,6 +112,7 @@ def main() -> None:
     # set_callback(handle_frame)
     cert_path: Path = Path("./src/cert.pem").absolute()
     key_path: Path = Path("./src/key.pem").absolute()
+    set_callback(handle_frame)
     _ = socketio.run(
         app, host="0.0.0.0", port=5000, debug=True, certfile=cert_path, keyfile=key_path
     )

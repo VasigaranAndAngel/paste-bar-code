@@ -12,11 +12,9 @@ app: Flask = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 callback: Callable[[MatLike], None] = lambda x: print(x.shape)
 
-
 def set_callback(_callback: Callable[[MatLike], None]) -> None:
     global callback
     callback = _callback
-
 
 @app.route("/")
 def index():

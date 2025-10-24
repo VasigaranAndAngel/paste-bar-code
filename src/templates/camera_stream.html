@@ -1,41 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Camera Stream</title>
+    <title>Live Camera Stream with Switch</title>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 </head>
 <body>
     <h2>Live Camera Stream to Flask</h2>
-    <video id="video" width="640" height="480" autoplay></video>
+    
+    <select id="cameraSelect"></select>
+    <button id="startBtn">Start Camera</button>
+    <button id="stopBtn">Stop Camera</button>
+
+    <video id="video" width="640" height="480" autoplay playsinline></video>
     <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
         const socket = io();
 
-        // Ask for camera access
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                sendFrames();
-            })
-            .catch(err => alert('Camera access denied: ' + err));
+        let stream = null;
+        let sendInterval = null;
 
-        // Capture and send frames continuously
-        function sendFrames() {
-            setInterval(() => {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataURL = canvas.toDataURL('image/jpeg', 0.5); // compress for speed
-                socket.emit('frame', dataURL);
-            }, 100); // 10 FPS — adjust for your needs
+        // 🔹 List available cameras
+        async function listCameras() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+            cameraSelect.innerHTML = '';
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
         }
 
-        // Optional: receive response from Flask
-        socket.on('server_response', (data) => {
-            console.log(data.msg);
+        // 🔹 Start streaming from selected camera
+        async function startCamera(deviceId) {
+            if (stream) stopCamera(); // stop previous stream if any
+
+            const constraints = {
+                video: {
+                    deviceId: deviceId ? { exact: deviceId } : undefined,
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
+            };
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                startSendingFrames();
+            } catch (err) {
+                alert('Could not start camera: ' + err);
+            }
+        }
+
+        // 🔹 Stop camera
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            stopSendingFrames();
+        }
+
+        // 🔹 Send frames continuously to Flask
+        function startSendingFrames() {
+            if (sendInterval) return;
+            sendInterval = setInterval(() => {
+                if (!stream) return;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.5);
+                socket.emit('frame', dataURL);
+            }, 100); // 10 FPS
+        }
+
+        function stopSendingFrames() {
+            clearInterval(sendInterval);
+            sendInterval = null;
+        }
+
+        // 🔹 Setup events
+        startBtn.onclick = () => startCamera(cameraSelect.value);
+        stopBtn.onclick = () => stopCamera();
+
+        // 🔹 Load camera list on startup
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            // Needed to get device labels (some browsers hide them until permission granted)
+            stream.getTracks().forEach(track => track.stop());
+            return listCameras();
+        }).catch(err => {
+            alert('Camera permission denied: ' + err);
         });
     </script>
 </body>
 </html>
+
