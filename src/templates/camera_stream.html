@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Camera Stream with Switch</title>
+    <title>Camera + Flashlight Control</title>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 </head>
 <body>
-    <h2>Live Camera Stream to Flask</h2>
+    <h2>Camera Stream with Flashlight</h2>
     
     <select id="cameraSelect"></select>
     <button id="startBtn">Start Camera</button>
     <button id="stopBtn">Stop Camera</button>
+    <button id="flashBtn">Toggle Flashlight</button>
 
     <video id="video" width="640" height="480" autoplay playsinline></video>
     <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
@@ -21,16 +22,18 @@
         const cameraSelect = document.getElementById('cameraSelect');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const flashBtn = document.getElementById('flashBtn');
         const socket = io();
 
         let stream = null;
+        let track = null;
+        let torchOn = false;
         let sendInterval = null;
 
-        // 🔹 List available cameras
+        // List available cameras
         async function listCameras() {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(d => d.kind === 'videoinput');
-
             cameraSelect.innerHTML = '';
             videoDevices.forEach((device, index) => {
                 const option = document.createElement('option');
@@ -40,9 +43,9 @@
             });
         }
 
-        // 🔹 Start streaming from selected camera
+        // Start selected camera
         async function startCamera(deviceId) {
-            if (stream) stopCamera(); // stop previous stream if any
+            if (stream) stopCamera();
 
             const constraints = {
                 video: {
@@ -55,22 +58,51 @@
             try {
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
+
+                // Get the video track
+                track = stream.getVideoTracks()[0];
                 startSendingFrames();
+
+                // Check if flashlight supported
+                const capabilities = track.getCapabilities();
+                if ('torch' in capabilities) {
+                    flashBtn.style.display = 'inline-block';
+                } else {
+                    flashBtn.style.display = 'none';
+                }
             } catch (err) {
                 alert('Could not start camera: ' + err);
             }
         }
 
-        // 🔹 Stop camera
+        // Stop camera
         function stopCamera() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
+                track = null;
             }
             stopSendingFrames();
+            flashBtn.style.display = 'none';
         }
 
-        // 🔹 Send frames continuously to Flask
+        // Toggle flashlight
+        async function toggleFlashlight() {
+            if (!track) return alert('Camera not started');
+            const capabilities = track.getCapabilities();
+            if (!capabilities.torch) return alert('Flashlight not supported on this camera');
+
+            try {
+                torchOn = !torchOn;
+                await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+                flashBtn.textContent = torchOn ? 'Flashlight ON' : 'Flashlight OFF';
+            } catch (err) {
+                console.error('Torch error:', err);
+                alert('Could not toggle flashlight: ' + err);
+            }
+        }
+
+        // Send frames continuously to Flask
         function startSendingFrames() {
             if (sendInterval) return;
             sendInterval = setInterval(() => {
@@ -78,7 +110,7 @@
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const dataURL = canvas.toDataURL('image/jpeg', 0.5);
                 socket.emit('frame', dataURL);
-            }, 100); // 10 FPS
+            }, 1000/60);
         }
 
         function stopSendingFrames() {
@@ -86,17 +118,15 @@
             sendInterval = null;
         }
 
-        // 🔹 Setup events
+        // Setup buttons
         startBtn.onclick = () => startCamera(cameraSelect.value);
         stopBtn.onclick = () => stopCamera();
+        flashBtn.onclick = () => toggleFlashlight();
 
-        // 🔹 Load camera list on startup
-        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-            // Needed to get device labels (some browsers hide them until permission granted)
-            stream.getTracks().forEach(track => track.stop());
+        // Initialize
+        navigator.mediaDevices.getUserMedia({ video: true }).then(s => {
+            s.getTracks().forEach(t => t.stop());
             return listCameras();
-        }).catch(err => {
-            alert('Camera permission denied: ' + err);
         });
     </script>
 </body>
