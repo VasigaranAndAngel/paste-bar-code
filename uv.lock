@@ -70,6 +70,7 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "pyautogui" },
+    { name = "pyside6" },
     { name = "pyzbar" },
 ]
 
@@ -79,6 +80,7 @@ requires-dist = [
     { name = "opencv-python", specifier = ">=4.12.0.88" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "pyautogui", specifier = ">=0.9.54" },
+    { name = "pyside6", specifier = "==6.9.1" },
     { name = "pyzbar", specifier = ">=0.1.9" },
 ]
 
