@@ -1,15 +1,17 @@
 from random import choices
 from string import ascii_letters
-from typing import override
+from typing import cast, override
 
 from PySide6.QtCore import QPoint, QPropertyAnimation, QRect, QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QEnterEvent, QLinearGradient, QPainter, QPaintEvent, QPen, QPixmap
-from PySide6.QtWidgets import QAbstractButton, QHBoxLayout, QLabel, QPushButton, QWidget
+from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPaintEvent, QPen, QPixmap
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
+
+from ._button import Button
 
 
 def draw_bulb(rect: QRect, color: QColor, outline_color: QColor) -> QPixmap:
-    elipse_rect = rect.adjusted(10, 10, -10, -10)
-    width, height = elipse_rect.size().width() / 2, elipse_rect.size().height() / 2
+    ellipse_rect = rect.adjusted(10, 10, -10, -10)
+    width, height = ellipse_rect.size().width() / 2, ellipse_rect.size().height() / 2
 
     pixmap = QPixmap(rect.size())
     pixmap.fill("Transparent")
@@ -18,7 +20,7 @@ def draw_bulb(rect: QRect, color: QColor, outline_color: QColor) -> QPixmap:
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         gradient = QLinearGradient()
 
-        # Region outline
+        # region outline
         dark_outline_color = outline_color.darker(160)
         gradient.setColorAt(0, dark_outline_color)
         gradient.setColorAt(1, outline_color)
@@ -27,10 +29,10 @@ def draw_bulb(rect: QRect, color: QColor, outline_color: QColor) -> QPixmap:
         pen.setWidth(int(0.15 * (rect.size().width() + rect.size().height()) / 2))
         pen.setBrush(gradient)
         p.setPen(pen)
-        p.drawEllipse(elipse_rect.adjusted(1, 1, 1, 1).center(), width, height)
+        p.drawEllipse(ellipse_rect.adjusted(1, 1, 1, 1).center(), width, height)
         # endregion
 
-        # Region green gradient fill
+        # region green gradient fill
         light_color = color.lighter(190)
         dark_color = color.darker(150)
         gradient.setColorAt(0, dark_color)
@@ -39,16 +41,16 @@ def draw_bulb(rect: QRect, color: QColor, outline_color: QColor) -> QPixmap:
         gradient.setFinalStop(0, 1.3)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(gradient)
-        p.drawEllipse(elipse_rect.adjusted(1, 1, 1, 1).center(), width, height)
-        # end region
+        p.drawEllipse(ellipse_rect.adjusted(1, 1, 1, 1).center(), width, height)
+        # endregion
 
-        # Region
+        # region
         gradient.setColorAt(0, QColor(255, 255, 255, 150))
         gradient.setColorAt(1, "transparent")
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(gradient)
         p.drawEllipse(
-            elipse_rect.adjusted(1, int(-height * 0.8), 1, 1).center(), width * 0.8, height / 2
+            ellipse_rect.adjusted(1, int(-height * 0.8), 1, 1).center(), width * 0.8, height / 2
         )
         # endregion
 
@@ -56,7 +58,7 @@ def draw_bulb(rect: QRect, color: QColor, outline_color: QColor) -> QPixmap:
 
 
 class DetectionIndicator(QWidget):
-    BUTTONS_WIDTH: int = 40
+    BUTTONS_WIDTH: int = 36
 
     def __init__(self, parent: QWidget | None) -> None:
         super().__init__(parent)
@@ -64,25 +66,21 @@ class DetectionIndicator(QWidget):
         self.GREEN_LIGHT: QPixmap = draw_bulb(QRect(0, 0, 35, 35), QColor("green"), QColor("grey"))
         self.WHITE_LIGHT: QPixmap = draw_bulb(QRect(0, 0, 35, 35), QColor("white"), QColor("grey"))
 
-        self.setMaximumHeight(50)
-
-        self._layout: QHBoxLayout = QHBoxLayout(self)
-        self._layout.setContentsMargins(5, 5, 5 + DetectionIndicator.BUTTONS_WIDTH, 5)
-        self._layout.setSpacing(5)
+        self.setMaximumHeight(40)
 
         self._code_label: QLabel = QLabel(self)
-        self._audio_button: QAbstractButton = QPushButton("V", self)
+        self._audio_button: Button = Button("X", self)
         self._audio_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
 
+        self._layout: QHBoxLayout = QHBoxLayout(self)
+        self._layout.setContentsMargins(10, 0, 0 + DetectionIndicator.BUTTONS_WIDTH, 0)
+        self._layout.setSpacing(0)
         self._layout.addWidget(self._code_label, Qt.AlignmentFlag.AlignLeft)
         self._layout.addWidget(self._audio_button, Qt.AlignmentFlag.AlignRight)
-
-        self._layout.addLayout(self._layout)
 
         self.setLayout(self._layout)
 
         _ = self.setProperty("light_opacity", 0.0)
-
         self._light_opacity_anim: QPropertyAnimation = QPropertyAnimation(
             self, b"light_opacity", self
         )
@@ -108,7 +106,7 @@ class DetectionIndicator(QWidget):
         self._timer_opacity_anim.setEndValue(1.0)
         _ = self._timer_opacity_anim.valueChanged.connect(self.repaint)
 
-        # Region test TODO: remove
+        # region test TODO: remove
         # self.setStyleSheet("QWidget {border: 1px solid red}")
         self._code_label.setText("abcxyz")
         timer = QTimer(self)
@@ -125,27 +123,33 @@ class DetectionIndicator(QWidget):
         self._timer_opacity_anim.stop()
         self._timer_opacity_anim.start()
 
-    @override
-    def enterEvent(self, event: QEnterEvent, /) -> None:
-        self.code_detected("")
-        return super().enterEvent(event)
+    def change_timer(self, ms: int) -> None:
+        self._timer_anim.setDuration(ms)
+        if ms < 500:
+            self._timer_opacity_anim.setDuration(int(0.25 * ms))
+        elif ms < 1700:
+            self._timer_opacity_anim.setDuration(250)
+        else:
+            self._timer_opacity_anim.setDuration(500)
 
     @override
     def paintEvent(self, event: QPaintEvent, /) -> None:
-        timer: float = self.property("timer")
-        opacity: float = self.property("timer_opacity")
+        timer = cast(float, self.property("timer"))
+        opacity = cast(float, self.property("timer_opacity"))
         middle = (wid := self.width()) / 2
         width = wid * (1 - timer)
         pos_x = middle - width / 2
         with QPainter(self) as p:
-            # Region test TODO: should be removed
-            penC = QColor("red")
-            penC.setAlphaF(0.5)
-            p.setPen(penC)
-            # p.drawRect(self.contentsRect().adjusted(0, 0, -1, -1))
+            p.setRenderHint(p.RenderHint.Antialiasing, True)
+            # region Draw background
+            color = self.palette().button().color()
+            color.setAlphaF(0.5)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(color)
+            p.drawRoundedRect(self.contentsRect(), 5, 5)
             # endregion
 
-            # Region Draw timer indicator
+            # region Draw timer indicator
             p.setPen(Qt.PenStyle.NoPen)
             brush = QColor("lightgreen")
             brush.setAlphaF(opacity)
@@ -153,8 +157,10 @@ class DetectionIndicator(QWidget):
             p.drawRect(QRectF(pos_x, self.height() - 2, width, 2))
             # endregion
 
-            # Region Draw bulb indicator
-            p.drawPixmap(QPoint(self.contentsRect().width() - 44, 7), self.WHITE_LIGHT)
-            p.setOpacity(self.property("light_opacity") or 0.0)
-            p.drawPixmap(QPoint(self.contentsRect().width() - 44, 7), self.GREEN_LIGHT)
+            # region Draw bulb indicator
+            p.drawPixmap(QPoint(self.contentsRect().width() - 40, 3), self.WHITE_LIGHT)
+            light_opacity = cast(float, self.property("light_opacity"))
+            if light_opacity > 0:
+                p.setOpacity(light_opacity)
+                p.drawPixmap(QPoint(self.contentsRect().width() - 40, 3), self.GREEN_LIGHT)
             # endregion
