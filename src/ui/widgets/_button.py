@@ -32,8 +32,6 @@ class Button(QAbstractButton):
             Qt.ApplicationAttribute.AA_SynthesizeMouseForUnhandledTouchEvents, True
         )
 
-        if text is None:  # TODO: remove
-            self.setText("test TEXT")  # TODO: remove
         self.setMaximumSize(10_000, 10_000)
 
         _ = self.setProperty("background_color", self.palette().button().color())

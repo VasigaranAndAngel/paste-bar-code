@@ -1,8 +1,6 @@
-from random import choices
-from string import ascii_letters
 from typing import cast, override
 
-from PySide6.QtCore import QPoint, QPropertyAnimation, QRect, QRectF, Qt, QTimer
+from PySide6.QtCore import QPoint, QPropertyAnimation, QRect, QRectF, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPaintEvent, QPen, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
@@ -106,14 +104,6 @@ class DetectionIndicator(QWidget):
         self._timer_opacity_anim.setStartValue(0.0)
         self._timer_opacity_anim.setEndValue(1.0)
         _ = self._timer_opacity_anim.valueChanged.connect(self.repaint)
-
-        # region test TODO: remove
-        # self.setStyleSheet("QWidget {border: 1px solid red}")
-        self._code_label.setText("abcxyz")
-        timer = QTimer(self)
-        _ = timer.timeout.connect(lambda: self.code_detected("".join(choices(ascii_letters, k=10))))
-        timer.start(2000)
-        # endregion
 
     def code_detected(self, code: str) -> None:
         self._code_label.setText(code)
