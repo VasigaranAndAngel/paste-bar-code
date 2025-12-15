@@ -21,6 +21,9 @@ class Button(QAbstractButton):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent, text=text)
+
+        self._custom_color: QColor | None = None
+
         self.setAttribute(Qt.WidgetAttribute.WA_AcceptTouchEvents)
         QApplication.setAttribute(
             Qt.ApplicationAttribute.AA_SynthesizeMouseForUnhandledTabletEvents, True
@@ -39,6 +42,11 @@ class Button(QAbstractButton):
         self._hover_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         _ = self._hover_anim.valueChanged.connect(self.repaint)
 
+    def set_custom_color(self, color: QColor | None) -> None:
+        self._custom_color = color
+        _ = self.setProperty("background_color", color)
+        self.repaint()
+
     def _change_color(self, color: QColor) -> None:
         self._hover_anim.stop()
         self._hover_anim.setEndValue(color)
@@ -46,24 +54,41 @@ class Button(QAbstractButton):
 
     @override
     def enterEvent(self, event: QEnterEvent, /) -> None:
-        self._change_color(self.palette().base().color())
+        color = (
+            x.darker(120)
+            if (x := self._custom_color) is not None
+            else self.palette().base().color()
+        )
+        self._change_color(color)
 
     @override
     def leaveEvent(self, event: QEvent, /) -> None:
-        self._change_color(self.palette().button().color())
+        color = x if (x := self._custom_color) is not None else self.palette().button().color()
+        self._change_color(color)
 
     @override
     def mousePressEvent(self, e: QMouseEvent, /) -> None:
-        self._change_color(self.palette().accent().color())
+        color = (
+            x.lighter(110)
+            if (x := self._custom_color) is not None
+            else self.palette().accent().color()
+        )
+        self._change_color(color)
 
     @override
     def mouseReleaseEvent(self, e: QMouseEvent, /) -> None:
         if self.rect().contains(e.pos()):
-            self._change_color(self.palette().base().color())
+            color = (
+                x.darker(120)
+                if (x := self._custom_color) is not None
+                else self.palette().base().color()
+            )
             self.click()
             self.clicked_with_modifiers.emit(e.modifiers())
         else:
-            self._change_color(self.palette().button().color())
+            color = x if (x := self._custom_color) else self.palette().button().color()
+
+        self._change_color(color)
 
     @override
     def event(self, e: QEvent, /) -> bool:

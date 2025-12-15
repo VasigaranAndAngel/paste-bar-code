@@ -71,6 +71,7 @@ class DetectionIndicator(QWidget):
         self._code_label: QLabel = QLabel(self)
         self._audio_button: Button = Button("X", self)
         self._audio_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
+        self._audio_button.set_custom_color(QColor("#ff5959"))
 
         self._layout: QHBoxLayout = QHBoxLayout(self)
         self._layout.setContentsMargins(10, 0, 0 + DetectionIndicator.BUTTONS_WIDTH, 0)
