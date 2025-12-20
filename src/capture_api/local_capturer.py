@@ -60,13 +60,13 @@ class LocalCapturer(Capturer):
 
     @override
     def stop_capturing(self) -> None:
-        capture = self._video_capture
-        if capture is not None:
-            capture.release()
         self._run_capturing = False
         thread = self._thread
         if thread is not None:
             thread.join()
+        capture = self._video_capture
+        if capture is not None:
+            capture.release()
 
     @override
     def set_frame_callback(self, func: Callable[[MatLike], None]) -> None:
@@ -94,8 +94,7 @@ class LocalCapturer(Capturer):
             print("camera not set.")
             return
 
-        run = True
-        while run:
+        while self._run_capturing:
             is_reading, img = camera.read()
             if is_reading:
                 if self._callback is not None:

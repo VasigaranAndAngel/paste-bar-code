@@ -9,6 +9,7 @@ from pyzbar.pyzbar import decode
 
 from capture_api import CaptureAPI
 from capture_api.local_capturer import LocalCapturer
+
 # from flask_app import app, set_callback, socketio
 from ui import MainWindow
 

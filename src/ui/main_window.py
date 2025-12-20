@@ -1,10 +1,16 @@
-from PySide6.QtCore import QSize
 import cv2
 import pyautogui
 from cv2.typing import MatLike
-from PIL import Image, ImageQt
 from PySide6.QtGui import QImage, QPixmap, Qt
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QMainWindow, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 from pyzbar.pyzbar import decode
 
 from ui.widgets import DetectionIndicator, TimerLineEditWidget
@@ -37,7 +43,8 @@ class MainWindow(QMainWindow):
         self._last_code: str = ""
         self._image_widget: QLabel = QLabel(self)
         self._image_widget.setMinimumSize(0, 0)
-        self._image_widget.minimumSize = lambda: QSize(0, 0)
+        self._image_widget.setScaledContents(True)
+        self._image_widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
 
         self._indicator_widget: DetectionIndicator = DetectionIndicator(self)
 
@@ -46,8 +53,12 @@ class MainWindow(QMainWindow):
         _ = self._interval_entry.value_changed.connect(self._change_timer)
         self._interval_entry.setValue(1.5)
 
+        self._press_enter: QCheckBox = QCheckBox(self)
+        self._press_enter.setText("Press Enter")
+
         self._buttons_layout: QHBoxLayout = QHBoxLayout()
         self._buttons_layout.addWidget(self._interval_entry)
+        self._buttons_layout.addWidget(self._press_enter)
         self._buttons_layout.addWidget(self._indicator_widget)
 
         self._main_layout: QVBoxLayout = QVBoxLayout()
@@ -65,10 +76,15 @@ class MainWindow(QMainWindow):
         h, w, ch = rgb_img.shape
         bytes_per_line = ch * w
         q_image = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
-        self._image_widget.setPixmap(QPixmap.fromImage(q_image))
-        if code and code != self._last_code:
+        pixmap = QPixmap.fromImage(q_image)
+        self._image_widget.setPixmap(pixmap)
+        self._image_widget.setMinimumSize(0, 0)
+        if not self._indicator_widget.locked and code and code != self._last_code:
             print(code)
+            self._indicator_widget.code_detected(code)
             pyautogui.typewrite(code)
+            if self._press_enter.isChecked():
+                pyautogui.press("enter")
             self._last_code = code
 
     def _change_timer(self, time: float) -> None:
