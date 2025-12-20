@@ -1,6 +1,6 @@
 from typing import cast, override
 
-from PySide6.QtCore import QPoint, QPropertyAnimation, QRect, QRectF, Qt
+from PySide6.QtCore import QPoint, QPropertyAnimation, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPaintEvent, QPen, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
@@ -57,12 +57,14 @@ def draw_bulb(rect: QRect, color: QColor, outline_color: QColor) -> QPixmap:
 
 class DetectionIndicator(QWidget):
     BUTTONS_WIDTH: int = 36
+    lock_changed: Signal = Signal(bool)
 
     def __init__(self, parent: QWidget | None) -> None:
         super().__init__(parent)
 
         self.GREEN_LIGHT: QPixmap = draw_bulb(QRect(0, 0, 35, 35), QColor("green"), QColor("grey"))
         self.WHITE_LIGHT: QPixmap = draw_bulb(QRect(0, 0, 35, 35), QColor("white"), QColor("grey"))
+        self.locked: bool = False
 
         self.setMaximumHeight(40)
 
@@ -122,6 +124,14 @@ class DetectionIndicator(QWidget):
             self._timer_opacity_anim.setDuration(250)
         else:
             self._timer_opacity_anim.setDuration(500)
+
+    def _lock(self) -> None:
+        self.locked = True
+        self.lock_changed.emit(True)
+
+    def _unlock(self) -> None:
+        self.locked = False
+        self.lock_changed.emit(False)
 
     @override
     def paintEvent(self, event: QPaintEvent, /) -> None:

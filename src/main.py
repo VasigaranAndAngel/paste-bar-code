@@ -1,12 +1,17 @@
+import sys
+import threading
 from pathlib import Path
-from time import perf_counter
 
 import cv2
-import pyautogui
 from cv2.typing import MatLike
+from PySide6.QtWidgets import QApplication
 from pyzbar.pyzbar import decode
 
-from app import app, set_callback, socketio
+from capture_api import CaptureAPI
+from capture_api.local_capturer import LocalCapturer
+
+# from flask_app import app, set_callback, socketio
+from ui import MainWindow
 
 
 def detect_and_decode_barcode(image):
@@ -88,37 +93,39 @@ def handle_frame(frame: MatLike) -> None:
         print(code)
 
 
-def main() -> None:
-    # test_image_path2 = Path("./barcode-scanner-756x557.webp").resolve()
-    # test_image_path = Path("./ezgifcom-crop.png").resolve()
-    # image = cv2.imread(test_image_path.as_posix())
-    # detect_and_decode_barcode(image)
-    # camera = cv2.VideoCapture(0)
-    # ret, frame = camera.read()
-    # current_code = ""
-    # while ret:
-    # ret, frame = camera.read()
-    # code, frame = read_code(frame)
-    # cv2.imshow("code", frame)
-    # if cv2.waitKey(1) & 0xFF == 27:
-    # break
-    # if code and code != current_code:
-    # current_code = code
-    # pyautogui.typewrite(code)
+# def start_flask() -> None:
+#     cert_path: Path = Path("./src/cert.pem").absolute()
+#     key_path: Path = Path("./src/key.pem").absolute()
+#     print(cert_path, key_path)
+#     set_callback(handle_frame)
+#     _ = socketio.run(  # pyright: ignore[reportUnknownMemberType]
+#         app,
+#         host="0.0.0.0",
+#         port=5000,
+#         debug=True,
+#         certfile=cert_path,
+#         keyfile=key_path,
+#         use_reloader=False,
+#     )
 
-    # camera.release()
-    # cv2.destroyAllWindows()
 
-    # set_callback(handle_frame)
-    cert_path: Path = Path("./src/cert.pem").absolute()
-    key_path: Path = Path("./src/key.pem").absolute()
-    set_callback(handle_frame)
-    _ = socketio.run(
-        app, host="0.0.0.0", port=5000, debug=True, certfile=cert_path, keyfile=key_path
-    )
+def main() -> int:
+    # initialize QApplication
+    app = QApplication(sys.argv)
+
+    win = MainWindow()
+    win.show()
+
+    capturer = CaptureAPI.get_available_capturing_methods()[0]
+    capturer = LocalCapturer
+    capture_api = CaptureAPI()
+    capture_api.start_capturing(capturer)
+    capture_api.set_frame_callback(win.update_frame)
+
+    _ = app.aboutToQuit.connect(capture_api.stop_capturing)
+
+    return app.exec()
 
 
 if __name__ == "__main__":
-    st = perf_counter()
-    main()
-    print(f"t: {perf_counter() - st}")
+    exit(main())
