@@ -97,6 +97,7 @@ class DetectionIndicator(QWidget):
         self._timer_anim.setStartValue(0.0)
         self._timer_anim.setEndValue(1.0)
         _ = self._timer_anim.valueChanged.connect(self.repaint)
+        _ = self._timer_anim.finished.connect(self._unlock)
 
         _ = self.setProperty("timer_opacity", 0.0)
         self._timer_opacity_anim: QPropertyAnimation = QPropertyAnimation(
@@ -108,6 +109,7 @@ class DetectionIndicator(QWidget):
         _ = self._timer_opacity_anim.valueChanged.connect(self.repaint)
 
     def code_detected(self, code: str) -> None:
+        self._lock()
         self._code_label.setText(code)
         self._light_opacity_anim.stop()
         self._light_opacity_anim.start()

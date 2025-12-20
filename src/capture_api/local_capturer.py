@@ -7,7 +7,7 @@ from cv2.typing import MatLike
 
 from .capturer_abc import Capturer
 
-# Source - https://stackoverflow.com/a
+# region Source - https://stackoverflow.com/a
 # Posted by G M, modified by community. See post 'Timeline' for change history
 # Retrieved 2025-12-16, License - CC BY-SA 4.0
 
@@ -26,7 +26,7 @@ def _list_ports() -> tuple[list[int], list[int], list[int]]:
             non_working_ports.append(dev_port)
             print("Port %s is not working." % dev_port)
         else:
-            is_reading, img = camera.read()
+            is_reading, _ = camera.read()
             w = camera.get(3)
             h = camera.get(4)
             if is_reading:
@@ -40,6 +40,9 @@ def _list_ports() -> tuple[list[int], list[int], list[int]]:
                 available_ports.append(dev_port)
         dev_port += 1
     return available_ports, working_ports, non_working_ports
+
+
+# endregion
 
 
 class LocalCapturer(Capturer):

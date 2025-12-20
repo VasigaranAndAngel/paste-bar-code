@@ -1,6 +1,7 @@
 import cv2
 import pyautogui
 from cv2.typing import MatLike
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QImage, QPixmap, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -11,30 +12,15 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from pyzbar.pyzbar import decode
 
+from detect_code import detect_code
 from ui.widgets import DetectionIndicator, TimerLineEditWidget
-
-# TODO: talkings
-# TODO: say application to use which input to use
-# TODO: get frames
-
-
-def read_code(frame):
-    barcodes = decode(frame)
-    code = ""
-    for barcode in barcodes:
-        x, y, w, h = barcode.rect
-        code: str = barcode.data.decode("utf-8")
-        _ = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-        font = cv2.FONT_HERSHEY_DUPLEX
-        _ = cv2.putText(frame, code, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
-
-    return code, frame
 
 
 class MainWindow(QMainWindow):
+    _update_frame_signal: Signal = Signal(str, object)
+    "To turn child thread's to main thread."
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -70,17 +56,21 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
+        _ = self._update_frame_signal.connect(self._update_frame)
+
     def update_frame(self, frame: MatLike) -> None:
-        code, _frame = read_code(frame)
+        code, _frame = detect_code(frame)
+        self._update_frame_signal.emit(code, _frame)
+
+    def _update_frame(self, code: str, _frame: MatLike) -> None:
         rgb_img = cv2.cvtColor(_frame, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_img.shape
-        bytes_per_line = ch * w
-        q_image = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+        h, w, ch = rgb_img.shape  # pyright: ignore[reportAny]
+        bytes_per_line = ch * w  # pyright: ignore[reportAny]
+        q_image = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)  # pyright: ignore[reportAny]
         pixmap = QPixmap.fromImage(q_image)
         self._image_widget.setPixmap(pixmap)
         self._image_widget.setMinimumSize(0, 0)
-        if not self._indicator_widget.locked and code and code != self._last_code:
-            print(code)
+        if code and not (self._indicator_widget.locked and code == self._last_code):
             self._indicator_widget.code_detected(code)
             pyautogui.typewrite(code)
             if self._press_enter.isChecked():
