@@ -46,17 +46,17 @@ def _list_ports() -> tuple[list[int], list[int], list[int]]:
 
 
 class LocalCapturer(Capturer):
+    _option_to_port_map: dict[str, int] | None = None
+    name: str | None = "Local Camera"
+
     def __init__(self) -> None:
         self._selected_port: int = 0
-        self._video_capture: cv2.VideoCapture | None = None
-        self._option_to_port_map: dict[str, int] = {}
         self._callback: Callable[[MatLike], None] | None = None
         self._run_capturing: bool = False
         self._thread: threading.Thread | None = None
 
     @override
     def start_capturing(self) -> None:
-        self._video_capture = cv2.VideoCapture(self._selected_port)
         self._run_capturing = True
         self._thread = threading.Thread(target=self._read_camera)
         self._thread.start()
@@ -64,41 +64,58 @@ class LocalCapturer(Capturer):
     @override
     def stop_capturing(self) -> None:
         self._run_capturing = False
-        thread = self._thread
-        if thread is not None:
-            thread.join()
-        capture = self._video_capture
-        if capture is not None:
-            capture.release()
+        if self._thread is not None:
+            self._thread.join()
+        self._thread = None
 
     @override
     def set_frame_callback(self, func: Callable[[MatLike], None]) -> None:
         self._callback = func
 
+    @staticmethod
     @override
-    def available_options(self) -> list[str]:
-        available_ports = _list_ports()
-        for port in available_ports[1]:
-            option = f"Port {port}"
-            self._option_to_port_map[option] = port
+    def available_options() -> list[str]:
+        if LocalCapturer._option_to_port_map is None:
+            LocalCapturer._update_available_options()
 
-        return list(self._option_to_port_map.keys())
+        if LocalCapturer._option_to_port_map is not None:
+            return list(LocalCapturer._option_to_port_map.keys())
+        else:
+            return []
 
     @override
-    def set_option(self, option: str):
-        if option not in self._option_to_port_map.keys():
+    def set_option(self, option: str) -> None:
+        if (
+            LocalCapturer._option_to_port_map is None
+            or option not in LocalCapturer._option_to_port_map.keys()
+        ):
             print("error. unknown option")
             return
-        self._selected_port = self._option_to_port_map[option]
+
+        self._selected_port = LocalCapturer._option_to_port_map[option]
+        # restart capturing to change the camera port
+        if self._run_capturing:
+            self.stop_capturing()
+            self.start_capturing()
 
     def _read_camera(self) -> None:
-        camera = self._video_capture
-        if camera is None:
-            print("camera not set.")
-            return
+        camera = cv2.VideoCapture(self._selected_port)
 
         while self._run_capturing:
             is_reading, img = camera.read()
             if is_reading:
                 if self._callback is not None:
                     self._callback(img)
+
+        camera.release()
+
+    @staticmethod
+    def _update_available_options() -> None:
+        if LocalCapturer._option_to_port_map is None:
+            LocalCapturer._option_to_port_map = {}
+
+        # available_ports = _list_ports()[1]
+        available_ports = [1, 2]
+        for port in available_ports:
+            option = f"Port {port}"
+            LocalCapturer._option_to_port_map[option] = port - 1

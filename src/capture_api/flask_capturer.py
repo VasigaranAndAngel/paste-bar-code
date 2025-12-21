@@ -10,6 +10,8 @@ from .capturer_abc import Capturer
 
 
 class FlaskCapturer(Capturer):
+    name: str | None = "Local Network Web"
+
     def __init__(self) -> None:
         self._frame_callback: Callable[[MatLike], None] | None = None
         self._thread: threading.Thread = threading.Thread(target=start_app)
@@ -26,10 +28,20 @@ class FlaskCapturer(Capturer):
 
     @override
     def stop_capturing(self) -> None:
-        self._thread.join(5)
         if self._thread.is_alive():
-            print(f"error stopping flask thread: {self._thread}")  # TODO: use logging instead
+            self._thread.join(5)
+            if self._thread.is_alive():
+                print(f"error stopping flask thread: {self._thread}")  # TODO: use logging instead
 
     @override
     def set_frame_callback(self, func: Callable[[MatLike], None]) -> None:
         self._frame_callback = func
+
+    @staticmethod
+    @override
+    def available_options() -> list[str]:
+        return []
+
+    @override
+    def set_option(self, option: str) -> None:
+        pass
