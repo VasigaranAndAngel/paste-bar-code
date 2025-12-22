@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QHBoxLayout,
-    QLabel,
     QMainWindow,
     QSizePolicy,
     QVBoxLayout,
@@ -19,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from detect_code import detect_code
-from ui.widgets import DetectionIndicator, TimerLineEditWidget
+from ui.widgets import DetectionIndicator, FrameLabel, TimerLineEditWidget
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
 
-        self._image_widget: QLabel = QLabel(self)
+        self._image_widget: FrameLabel = FrameLabel(self)
         self._image_widget.setMinimumSize(0, 0)
         self._image_widget.setScaledContents(True)
         self._image_widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
@@ -99,7 +98,6 @@ class MainWindow(QMainWindow):
         q_image = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)  # pyright: ignore[reportAny]
         pixmap = QPixmap.fromImage(q_image)
         self._image_widget.setPixmap(pixmap)
-        self._image_widget.setMinimumSize(0, 0)
         if code and not (self._indicator_widget.locked and code == self._last_code):
             self._indicator_widget.code_detected(code)
             pyautogui.typewrite(code)
