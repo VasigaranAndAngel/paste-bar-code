@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QMainWindow,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -36,9 +35,6 @@ class MainWindow(QMainWindow):
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
 
         self._image_widget: FrameLabel = FrameLabel(self)
-        self._image_widget.setMinimumSize(0, 0)
-        self._image_widget.setScaledContents(True)
-        self._image_widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
 
         self._indicator_widget: DetectionIndicator = DetectionIndicator(self)
 
