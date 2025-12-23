@@ -2,7 +2,7 @@ from typing import cast, override
 
 from PySide6.QtCore import QPoint, QPropertyAnimation, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPaintEvent, QPen, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QWidget
 
 from ._button import Button
 
@@ -69,13 +69,24 @@ class DetectionIndicator(QWidget):
         self.setMaximumHeight(40)
 
         self._code_label: QLabel = QLabel(self)
+        self._code_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+            | Qt.TextInteractionFlag.TextSelectableByKeyboard
+        )
+        self._code_label.setText("test text")
+
+        self._copy_button: Button = Button("C", self)
+        self._copy_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
+        _ = self._copy_button.clicked.connect(self._on_copy_button)
+
         self._audio_button: Button = Button("X", self)
         self._audio_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
         self._audio_button.set_custom_color(QColor("#ff5959"))
 
         self._layout: QHBoxLayout = QHBoxLayout(self)
-        self._layout.setContentsMargins(10, 0, 0 + DetectionIndicator.BUTTONS_WIDTH, 0)
-        self._layout.setSpacing(0)
+        self._layout.setContentsMargins(2, 0, 0 + DetectionIndicator.BUTTONS_WIDTH, 0)
+        self._layout.setSpacing(5)
+        self._layout.addWidget(self._copy_button, Qt.AlignmentFlag.AlignRight)
         self._layout.addWidget(self._code_label, Qt.AlignmentFlag.AlignLeft)
         self._layout.addWidget(self._audio_button, Qt.AlignmentFlag.AlignRight)
 
@@ -134,6 +145,9 @@ class DetectionIndicator(QWidget):
     def _unlock(self) -> None:
         self.locked = False
         self.lock_changed.emit(False)
+
+    def _on_copy_button(self) -> None:
+        QApplication.clipboard().setText(self._code_label.text())
 
     @override
     def paintEvent(self, event: QPaintEvent, /) -> None:
