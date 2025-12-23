@@ -34,7 +34,7 @@ class Button(QAbstractButton):
 
         self.setMaximumSize(10_000, 10_000)
 
-        _ = self.setProperty("background_color", self.palette().button().color())
+        _ = self.setProperty("background_color", self.palette().base().color())
         self._hover_anim: QPropertyAnimation = QPropertyAnimation(self, b"background_color", self)
         self._hover_anim.setDuration(300)
         self._hover_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -55,13 +55,13 @@ class Button(QAbstractButton):
         color = (
             x.darker(120)
             if (x := self._custom_color) is not None
-            else self.palette().base().color()
+            else self.palette().button().color()
         )
         self._change_color(color)
 
     @override
     def leaveEvent(self, event: QEvent, /) -> None:
-        color = x if (x := self._custom_color) is not None else self.palette().button().color()
+        color = x if (x := self._custom_color) is not None else self.palette().base().color()
         self._change_color(color)
 
     @override
@@ -79,12 +79,12 @@ class Button(QAbstractButton):
             color = (
                 x.darker(120)
                 if (x := self._custom_color) is not None
-                else self.palette().base().color()
+                else self.palette().button().color()
             )
             self.click()
             self.clicked_with_modifiers.emit(e.modifiers())
         else:
-            color = x if (x := self._custom_color) else self.palette().button().color()
+            color = x if (x := self._custom_color) else self.palette().base().color()
 
         self._change_color(color)
 
