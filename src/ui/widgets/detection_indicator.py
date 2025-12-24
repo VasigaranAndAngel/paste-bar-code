@@ -79,16 +79,16 @@ class DetectionIndicator(QWidget):
         self._copy_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
         _ = self._copy_button.clicked.connect(self._on_copy_button)
 
-        self._audio_button: Button = Button("X", self)
-        self._audio_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
-        self._audio_button.set_custom_color(QColor("#ff5959"))
+        # self._audio_button: Button = Button("X", self)
+        # self._audio_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
+        # self._audio_button.set_custom_color(QColor("#ff5959"))
 
         self._layout: QHBoxLayout = QHBoxLayout(self)
         self._layout.setContentsMargins(2, 0, 0 + DetectionIndicator.BUTTONS_WIDTH, 0)
         self._layout.setSpacing(5)
         self._layout.addWidget(self._copy_button, Qt.AlignmentFlag.AlignRight)
         self._layout.addWidget(self._code_label, Qt.AlignmentFlag.AlignLeft)
-        self._layout.addWidget(self._audio_button, Qt.AlignmentFlag.AlignRight)
+        # self._layout.addWidget(self._audio_button, Qt.AlignmentFlag.AlignRight)
 
         self.setLayout(self._layout)
 

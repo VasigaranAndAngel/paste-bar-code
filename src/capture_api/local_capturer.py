@@ -86,6 +86,11 @@ class LocalCapturer(Capturer):
                     )
                     return
                 camera = cv2.VideoCapture(self._selected_cameras[selected_index].index)
+                # set frame size to a high value.
+                # OpenCV will automatically negotiate with the driver and default to the highest
+                # supported resolution for that device
+                _ = camera.set(cv2.CAP_PROP_FRAME_WIDTH, 10000)
+                _ = camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 10000)
                 break
             except:  # TODO: specify exceptions
                 selected_index += 1
