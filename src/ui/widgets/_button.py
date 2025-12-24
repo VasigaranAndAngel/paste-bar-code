@@ -66,6 +66,9 @@ class Button(QAbstractButton):
 
     @override
     def mousePressEvent(self, e: QMouseEvent, /) -> None:
+        if e.button() != Qt.MouseButton.LeftButton:
+            return
+
         color = (
             x.lighter(110)
             if (x := self._custom_color) is not None
@@ -75,6 +78,9 @@ class Button(QAbstractButton):
 
     @override
     def mouseReleaseEvent(self, e: QMouseEvent, /) -> None:
+        if e.button() != Qt.MouseButton.LeftButton:
+            return
+
         if self.rect().contains(e.pos()):
             color = (
                 x.darker(120)
@@ -100,7 +106,6 @@ class Button(QAbstractButton):
                     e.modifiers(),
                 )
                 self.mousePressEvent(mouse_event)
-                pass
             elif e.type() == e.Type.TouchUpdate:
                 pass
             elif e.type() == e.Type.TouchEnd:
