@@ -1,7 +1,7 @@
 from typing import override
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPaintEvent, QPixmap
+from PySide6.QtGui import QPainter, QPainterPath, QPaintEvent, QPixmap
 from PySide6.QtWidgets import QCheckBox, QLabel, QWidget
 
 
@@ -36,4 +36,11 @@ class FrameLabel(QLabel):
 
         with QPainter(self) as p:
             p.setRenderHint(p.RenderHint.Antialiasing, True)
-            p.drawImage(self.contentsRect().center() - image.rect().center(), image)
+
+            image_pos = self.contentsRect().center() - image.rect().center()
+            path = QPainterPath()
+            path.addRoundedRect(
+                image_pos.x(), image_pos.y(), image.size().width(), image.size().height(), 10, 10
+            )
+            p.setClipPath(path)
+            p.drawImage(image_pos, image)
