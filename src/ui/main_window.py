@@ -33,6 +33,8 @@ class MainWindow(QMainWindow):
         self._option_change_callback: Callable[[str], None] | None = None
 
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+
+        self.setWindowTitle("Paste Bar Code")
         size = QSize(600, 400)
         screen_size=  self.screen().size()
         pos = QPoint()
