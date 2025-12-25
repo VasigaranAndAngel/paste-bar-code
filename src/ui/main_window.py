@@ -5,7 +5,7 @@ from collections.abc import Callable
 import cv2
 import pyautogui
 from cv2.typing import MatLike
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QPoint, QRect, QSize, Signal
 from PySide6.QtGui import QImage, QPixmap, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -33,6 +33,15 @@ class MainWindow(QMainWindow):
         self._option_change_callback: Callable[[str], None] | None = None
 
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        size = QSize(600, 400)
+        screen_size=  self.screen().size()
+        pos = QPoint()
+        pos.setX((screen_size.width() - size.width()) // 2)
+        pos.setY((screen_size.height() - size.height()) // 2)
+        rect = QRect()
+        rect.setTopLeft(pos)
+        rect.setSize(size)
+        self.setGeometry(rect)
 
         self._image_widget: FrameLabel = FrameLabel(self)
 
@@ -74,7 +83,6 @@ class MainWindow(QMainWindow):
             self._update_frame(code, _frame)
 
     def update_options(self, options: list[str]) -> None:
-        logger.info(f"Updating options: {options}")
         self._options_combobox.addItems(options)
         self._options_combobox.setCurrentIndex(0)
 
