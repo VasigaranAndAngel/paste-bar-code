@@ -19,6 +19,9 @@ line-length = 100
 select = ["I"]
 
 [dependency-groups]
+audio-gen = [
+    "scipy>=1.16.3",
+]
 dev = [
     "pyside-widget-reloader>=0.0.3",
 ]
