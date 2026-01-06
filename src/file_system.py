@@ -3,7 +3,7 @@ from pathlib import Path
 
 if hasattr(sys, "frozen"):
     if hasattr(sys, "_MEIPASS"):  # check if build with `pyinstaller --onefile`
-        app_dir = Path(getattr(sys, "_MEIPASS"))
+        app_dir = Path(getattr(sys, "_MEIPASS"))  # pyright: ignore[reportAny]
     else:
         app_dir = Path(sys.executable).parent
     resource_dir = app_dir.joinpath("resources")

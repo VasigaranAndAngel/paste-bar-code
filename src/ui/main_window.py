@@ -7,7 +7,7 @@ import cv2
 import pyautogui
 from cv2.typing import MatLike
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
-from PySide6.QtGui import QImage, QMouseEvent, QPixmap, Qt
+from PySide6.QtGui import QImage, QMouseEvent, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
