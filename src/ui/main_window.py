@@ -1,12 +1,13 @@
 import logging
 import threading
 from collections.abc import Callable
+from typing import override
 
 import cv2
 import pyautogui
 from cv2.typing import MatLike
-from PySide6.QtCore import QPoint, QRect, QSize, Signal
-from PySide6.QtGui import QImage, QPixmap, Qt
+from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
+from PySide6.QtGui import QImage, QMouseEvent, QPixmap, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -33,6 +34,7 @@ class MainWindow(QMainWindow):
 
         self._last_code: str = ""
         self._option_change_callback: Callable[[str], None] | None = None
+        self._mouse_pressed: QPoint | None = None
 
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
 
@@ -92,6 +94,27 @@ class MainWindow(QMainWindow):
 
     def set_option_change_callback(self, func: Callable[[str], None] | None) -> None:
         self._option_change_callback = func
+    
+    @override
+    def mousePressEvent(self, event: QMouseEvent, /) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._mouse_pressed = event.globalPos() - self.pos()
+        else:
+            return super().mousePressEvent(event)
+    
+    @override
+    def mouseMoveEvent(self, event: QMouseEvent, /) -> None:
+        if self._mouse_pressed is not None:
+            self.move(event.globalPos() - self._mouse_pressed)
+        else:
+            return super().mouseMoveEvent(event)
+    
+    @override
+    def mouseReleaseEvent(self, event: QMouseEvent, /) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._mouse_pressed = None
+        else:
+            return super().mouseReleaseEvent(event)
 
     def _on_capture_on(self) -> None:
         raise NotImplementedError
