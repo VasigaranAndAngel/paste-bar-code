@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
 from detect_code import detect_code
 from ui.widgets import DetectionIndicator, FrameLabel, TimerLineEditWidget
 
+from .beep_sound import play_beep
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +38,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Paste Bar Code")
         size = QSize(600, 400)
-        screen_size=  self.screen().size()
+        screen_size = self.screen().size()
         pos = QPoint()
         pos.setX((screen_size.width() - size.width()) // 2)
         pos.setY((screen_size.height() - size.height()) // 2)
@@ -106,6 +108,7 @@ class MainWindow(QMainWindow):
         self._image_widget.setPixmap(pixmap)
         if code and not (self._indicator_widget.locked and code == self._last_code):
             self._indicator_widget.code_detected(code)
+            play_beep()
             pyautogui.typewrite(code)
             if self._press_enter.isChecked():
                 pyautogui.press("enter")
