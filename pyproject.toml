@@ -25,3 +25,6 @@ audio-gen = [
 dev = [
     "pyside-widget-reloader>=0.0.3",
 ]
+setup = [
+    "pyinstaller>=6.17.0",
+]
