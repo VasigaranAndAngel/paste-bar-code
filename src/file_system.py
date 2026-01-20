@@ -10,6 +10,8 @@ if hasattr(sys, "frozen"):
 else:
     resource_dir = "src/resources"
 
+CONFIG_FILE = Path.home() / "appdata" / "Local" / "Paste Bar Code" / "config.json"
+
 RESOURCES_DIR = Path(resource_dir).absolute()
 
 BEEP_SOUND_WAV = sf if (sf := RESOURCES_DIR.joinpath("beep_sound.wav")).exists() else None

@@ -18,8 +18,8 @@ def main() -> int:
     capture_api.set_frame_callback(win.update_frame)
 
     available_options = capture_api.get_options()
-    win.set_option_change_callback(capture_api.set_option)
-    win.update_options(available_options)
+    win.set_capture_option_change_callback(capture_api.set_option)
+    win.update_capture_options(available_options)
     capture_api.start_capturing()
 
     _ = app.aboutToQuit.connect(capture_api.stop_capturing)
