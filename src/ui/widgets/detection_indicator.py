@@ -73,7 +73,6 @@ class DetectionIndicator(QWidget):
             Qt.TextInteractionFlag.TextSelectableByMouse
             | Qt.TextInteractionFlag.TextSelectableByKeyboard
         )
-        self._code_label.setText("test text")
 
         self._copy_button: Button = Button("C", self)
         self._copy_button.setFixedSize(*[DetectionIndicator.BUTTONS_WIDTH] * 2)
