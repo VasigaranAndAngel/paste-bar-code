@@ -94,10 +94,6 @@ The executable will be created in the `dist/` directory.
 - **Flask**: Web interface for camera streaming
 - **eventlet**: WebSocket support for Flask
 
-## License
-
-This project is licensed under the MIT License.
-
 ## Contributing
 
 1. Fork the repository
