@@ -32,7 +32,7 @@ def find_pyzbar_dlls():
         for dll_name in ['libiconv.dll', 'libzbar-64.dll']:
             dll_path = pyzbar_path / dll_name
             if dll_path.exists():
-                dlls.append((str(dll_path), 'pyzbar'))
+                dlls.append((str(dll_path), 'pyzbar', 'BINARY'))
             else:
                 print(f"Warning: {dll_name} not found at {dll_path}")
     except ImportError:
