@@ -4,7 +4,7 @@
 a = Analysis(
     ['src\\main.py'],
     pathex=[],
-    binaries=[('C:\\_My\\Projects\\Programming\\Python\\_My\\paste-bar-code\\.venv\\Lib\\site-packages\\pyzbar\\libiconv.dll', 'pyzbar'), ('C:\\_My\\Projects\\Programming\\Python\\_My\\paste-bar-code\\.venv\\Lib\\site-packages\\pyzbar\\libzbar-64.dll', 'pyzbar')],
+    binaries=[],
     datas=[('.\\src\\resources\\', 'resources')],
     hiddenimports=[],
     hookspath=[],
@@ -14,6 +14,39 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
+# Add pyzbar DLLs dynamically if they exist
+import os
+import sys
+from pathlib import Path
+
+def find_pyzbar_dlls():
+    """Find pyzbar DLLs in the current environment"""
+    dlls = []
+    try:
+        # Try to find pyzbar site-packages
+        import pyzbar
+        pyzbar_path = Path(pyzbar.__file__).parent
+        
+        # Look for DLLs in pyzbar directory
+        for dll_name in ['libiconv.dll', 'libzbar-64.dll']:
+            dll_path = pyzbar_path / dll_name
+            if dll_path.exists():
+                dlls.append((str(dll_path), 'pyzbar'))
+            else:
+                print(f"Warning: {dll_name} not found at {dll_path}")
+    except ImportError:
+        print("Warning: pyzbar not found during spec processing")
+    except Exception as e:
+        print(f"Warning: Error finding pyzbar DLLs: {e}")
+    
+    return dlls
+
+# Add DLLs to binaries
+pyzbar_dlls = find_pyzbar_dlls()
+if pyzbar_dlls:
+    a.binaries.extend(pyzbar_dlls)
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
