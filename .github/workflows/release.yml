@@ -1,0 +1,91 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Get version from tag
+      id: version
+      run: |
+        $tag = "${{ github.ref_name }}"
+        $version = $tag -replace '^v', ''
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "Tag version: $version"
+        
+    - name: Set filename variables
+      id: filenames
+      run: |
+        $baseName = "Paste Bar Code"
+        $version = "${{ steps.version.outputs.version }}"
+        $extension = "exe"
+        $fullFileName = "$baseName v$version.$extension"
+        echo "filename=$fullFileName" >> $env:GITHUB_OUTPUT
+        echo "Filename set to: $fullFileName"
+        
+    - name: Install dependencies
+      run: |
+        uv sync
+        
+    - name: Build executable with PyInstaller
+      run: |
+        uv run pyinstaller --clean main.spec
+        
+    - name: Rename executable with version
+      run: |
+        cd dist
+        Rename-Item "Paste Bar Code.exe" "${{ steps.filenames.outputs.filename }}"
+        
+    - name: Generate checksum
+      run: |
+        cd dist
+        Get-FileHash -Path "${{ steps.filenames.outputs.filename }}" -Algorithm SHA256 | Out-File -FilePath "checksum.sha256" -Encoding utf8
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/${{ steps.filenames.outputs.filename }}
+          dist/checksum.sha256
+        name: Release v${{ steps.version.outputs.version }}
+        body: |
+          ## Release v${{ steps.version.outputs.version }}
+          
+          ### Download
+          - `${{ steps.filenames.outputs.filename }}` - Main executable
+          - `checksum.sha256` - SHA256 checksum for verification
+          
+          ### Installation
+          1. Download the executable
+          2. Run it directly
+          
+          ### Verification
+          ```powershell
+          Get-FileHash -Path "${{ steps.filenames.outputs.filename }}" -Algorithm SHA256
+          ```
+          Compare the output with the checksum.sha256 file.
+          
+          ---
+          *This release was automatically created when version tag was pushed.*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
