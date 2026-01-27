@@ -5,8 +5,10 @@ from PySide6.QtWidgets import QApplication
 
 from capture_api import CaptureAPI
 from ui import MainWindow
+from version import __version__
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 def main() -> int:
     app = QApplication(sys.argv)
@@ -28,4 +30,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--version" in sys.argv:
+        print(__version__)
+        sys.exit(0)
+
     sys.exit(main())

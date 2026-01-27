@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from configs import LOCK_INTERVAL, PRESS_ENTER, configs
 from detect_code import detect_code
 from ui.widgets import DetectionIndicator, FrameLabel, TimerLineEditWidget
+from version import __version__
 
 from .beep_sound import play_beep
 
@@ -38,7 +39,7 @@ class MainWindow(QMainWindow):
         self._capture_option_change_callback: Callable[[str], None] | None = None
         self._mouse_pressed: QPoint | None = None
 
-        self.setWindowTitle("Paste Bar Code")
+        self.setWindowTitle(f"Paste Bar Code - v{__version__}")
 
         win_geo = configs["window_geo"]
         if win_geo == "center":
