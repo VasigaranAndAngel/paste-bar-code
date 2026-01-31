@@ -37,7 +37,7 @@ jobs:
         $baseName = "Paste Bar Code"
         $version = "${{ steps.version.outputs.version }}"
         $extension = "exe"
-        $fullFileName = "$baseName v$version.$extension"
+        $fullFileName = "$baseName.$extension"
         echo "filename=$fullFileName" >> $env:GITHUB_OUTPUT
         echo "Filename set to: $fullFileName"
         
