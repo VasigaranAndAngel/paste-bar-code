@@ -1,10 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+# region Prepare pyzbar dll paths to add them to binaries.
+# NOTE: tried adding 'pyzbar' to hiddenimports. but didn't work for some reason.
+from pathlib import Path
+
+import pyzbar
+
+pyzbar_path = Path(pyzbar.__file__).parent
+libiconv_dll_path = pyzbar_path / "libiconv.dll"
+libzbar_64_dll_path = pyzbar_path / "libzbar-64.dll"
+# endregion
 
 a = Analysis(
     ['src\\main.py'],
     pathex=[],
-    binaries=[],
+    binaries=[(libiconv_dll_path.as_posix(), "pyzbar"), (libzbar_64_dll_path.as_posix(), "pyzbar")],
     datas=[('.\\src\\resources\\', 'resources')],
     hiddenimports=[],
     hookspath=[],
@@ -15,38 +25,6 @@ a = Analysis(
     optimize=0,
 )
 
-# Add pyzbar DLLs dynamically if they exist
-import os
-import sys
-from pathlib import Path
-
-def find_pyzbar_dlls():
-    """Find pyzbar DLLs in the current environment"""
-    dlls = []
-    try:
-        # Try to find pyzbar site-packages
-        import pyzbar
-        pyzbar_path = Path(pyzbar.__file__).parent
-        
-        # Look for DLLs in pyzbar directory
-        for dll_name in ['libiconv.dll', 'libzbar-64.dll']:
-            dll_path = pyzbar_path / dll_name
-            if dll_path.exists():
-                dlls.append((str(dll_path), 'pyzbar', 'BINARY'))
-            else:
-                print(f"Warning: {dll_name} not found at {dll_path}")
-    except ImportError:
-        print("Warning: pyzbar not found during spec processing")
-    except Exception as e:
-        print(f"Warning: Error finding pyzbar DLLs: {e}")
-    
-    return dlls
-
-# Add DLLs to binaries
-pyzbar_dlls = find_pyzbar_dlls()
-if pyzbar_dlls:
-    a.binaries.extend(pyzbar_dlls)
-
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -56,6 +34,7 @@ exe = EXE(
     a.datas,
     [],
     name='Paste Bar Code',
+    icon='src/resources/icon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
